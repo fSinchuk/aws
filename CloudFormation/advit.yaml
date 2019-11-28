@@ -1,16 +1,27 @@
-# Developed by Fedir Sinchuk
+# © 2019 Fedir Sinchuk
 # mail: fedir.sinchuk@outlook.com
+# linkedin: https://www.linkedin.com/in/sfed0r/
 AWSTemplateFormatVersion: "2010-09-09"
+Mappings: 
+  RegionMap: 
+    ap-southeast-2: 
+      HVM64: "ami-8a3f9ae8"
+    us-west-1: 
+      HVM64: "ami-0bdb828fd58c52235"
+
 Parameters: 
   VpcIdParameter:
     Type: AWS::EC2::VPC::Id
-    Description: Select your VPC
-  SubnetIdParameter:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: Allowed list of subnets
+    Description: Your VPC
+
+  SubnetsParameters:
+      Type: List<AWS::EC2::Subnet::Id>
+      Description: Allowed list of subnets
+
   SSHKeyParameter:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Select your SSH key for EC2 instance
+    Description: Your SSH key
+
   InstanceTypeParameter:
     Type: String
     Default: t2.micro
@@ -18,30 +29,13 @@ Parameters:
       - t2.micro
       - m1.small
       - m1.large
-    Description: Select one of available size of your EC2 instance
+    Description: EC2 instance type
 Resources:
-  Ec2Instance: 
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: !Ref InstanceTypeParameter
-      ImageId: ami-8a3f9ae8
-      SecurityGroups:
-        - !Ref ADVITSecurityGroup
-      IamInstanceProfile: !Ref ADVITInstanceProfile
-      Tags:
-        -
-          Key: Name
-          Value: IDV-IT EC2 old version
-        -
-          Key: Region
-          Value: !Join
-            - ""
-            - - "EC2 region: "
-              - !Ref AWS::Region
- 
+  #-----------------------------------------------------------------------
   ADVITSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      VpcId: !Ref VpcIdParameter
       GroupDescription: Enable SSH via port 22
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -51,13 +45,9 @@ Resources:
       Tags:
         -
           Key: Name
-<<<<<<< Updated upstream
-          Value: Security group 1111 for ADV-IT test task
+          Value: Security group for ADV-IT
+  #-----------------------------------------------------------------------
   ADVITLeastPrevilegeRole:
-=======
-          Value: Security group for ADV-IT test task
-  ADVITLeastPrevilegeRole: 
->>>>>>> Stashed changes
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument: 
@@ -71,6 +61,7 @@ Resources:
             Action: 
               - sts:AssumeRole
       Path: /
+  #-----------------------------------------------------------------------
   ADVITRolePolicies: 
     Type: AWS::IAM::Policy
     Properties: 
@@ -85,21 +76,109 @@ Resources:
       Roles: 
         - 
           Ref: ADVITLeastPrevilegeRole
+  #-----------------------------------------------------------------------
   ADVITInstanceProfile: 
     Type: AWS::IAM::InstanceProfile
     Properties: 
-<<<<<<< Updated upstream
       Path: "/"
-      Roles: ["ADVITLeastPrevilegeRole"]
+      Roles: [ Ref: 'ADVITLeastPrevilegeRole' ]
+  #-----------------------------------------------------------------------
+
+  # ADVITLaunchTemplate:
+  #   Type: AWS::EC2::LaunchTemplate
+  #   Properties: 
+  #     LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+  #     LaunchTemplateData: 
+  #       CreditSpecification: 
+  #         CpuCredits: Unlimited
+  #       ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", HVM64 ]
+  #       InstanceType: !Ref InstanceTypeParameter
+  #       IamInstanceProfile:
+  #          Arn: !Ref ADVITInstanceProfile
+  #          Name: ADVIT Instance Profile
+  #       KeyName: !Ref SSHKeyParameter
+  #      
+  #       Monitoring: 
+  #         Enabled: true
+  #       SecurityGroupIds: 
+  #         - !Ref ADVITSecurityGroup  
+  #-----------------------------------------------------------------------
+
+  # ADVITLoadBalancer:
+  #   Type: AWS::ElasticLoadBalancing::LoadBalancer
+  #   Properties:
+  #     Subnets: !Ref 'SubnetsParameters'
+  #     CrossZone: 'true'
+  #     Listeners:
+  #     - LoadBalancerPort: '80'
+  #       InstancePort: '80'
+  #       Protocol: HTTP
+  #     HealthCheck:
+  #       Target: HTTP:80/
+  #       HealthyThreshold: '3'
+  #       UnhealthyThreshold: '5'
+  #       Interval: '30'
+  #       Timeout: '5'
+  #     ConnectionDrainingPolicy:
+  #       Enabled: 'true'
+  #       Timeout: '300'
+  #     Tags:
+  #       -
+  #         Key: Name
+  #         Value: ADV-IT load balancer
+  #------------------------------------------------------------------------
+  ADVITAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      #LoadBalancerNames: [!Ref 'ADVITLoadBalancer']
+      Cooldown: 120
+        #InstanceId: !Ref Ec2Instance
+      DesiredCapacity: 1
+      MaxSize: 1
+      MinSize: 1
       Tags:
         -
           Key: Name
-          Value: ADVIT Instance profile for ADVITLeastPrevilegeRole which do nothing
-    
-  
-=======
-      Path: /
-      Roles: 
-        - 
-          Ref: ADVITLeastPrevilegeRole  
->>>>>>> Stashed changes
+          Value: ADV-IT auto re-run instance
+          PropagateAtLaunch: 'true'
+      VPCZoneIdentifier: !Ref 'SubnetsParameters'
+      InstanceId: !Ref 'ADVITEc2Instance'
+      # LaunchTemplate:
+      #   LaunchTemplateId: !Ref ADVITLaunchTemplate
+      #   Version: !GetAtt ADVITLaunchTemplate.LatestVersionNumber
+  #--------------------------------------------------------------------------
+  ADVITEc2Instance: 
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceTypeParameter
+      ImageId: ami-8a3f9ae8
+      SecurityGroups:
+        - !Ref ADVITSecurityGroup
+      IamInstanceProfile: !Ref ADVITInstanceProfile
+      UserData: !Base64
+        Fn::Join:
+          - ''
+          - [IPAddress=, !Ref 'ADVITIPAddress']
+      Tags:
+        -
+          Key: Name
+          Value: IDV-IT EC2
+        -
+          Key: Region
+          Value: !Join
+            - ""
+            - - "EC2 region: "
+              - !Ref AWS::Region
+  #--------------------------------------------------------------------------
+  ADVITIPAddress:
+    Type: AWS::EC2::EIP
+    Tags:
+      -
+        Key: Name
+        Value: IDV-IT EIP 
+  ADVITIPAssoc:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref 'ADVITEc2Instance'
+      EIP: !Ref 'ADVITIPAddress'

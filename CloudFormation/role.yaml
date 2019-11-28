@@ -120,7 +120,7 @@ Resources:
         Tags:
           -
             Key: Name
-            Value: ADV-IT Aotoscaling group
+            Value: ADV-IT auto re-run instance
             PropagateAtLaunch: 'true'
         VPCZoneIdentifier: !Ref 'SubnetsParameters'
         LaunchTemplate:
