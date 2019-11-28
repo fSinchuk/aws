@@ -153,9 +153,9 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceTypeParameter
       ImageId: ami-8a3f9ae8
-      SecurityGroups:
-        - !Ref ADVITSecurityGroup
+      SecurityGroupIds: [ Ref: ADVITSecurityGroup]
       IamInstanceProfile: !Ref ADVITInstanceProfile
+      SubnetId: !Select [0, Ref: 'SubnetsParameters']
       UserData: !Base64
         Fn::Join:
           - ''
@@ -173,10 +173,6 @@ Resources:
   #--------------------------------------------------------------------------
   ADVITIPAddress:
     Type: AWS::EC2::EIP
-    Tags:
-      -
-        Key: Name
-        Value: IDV-IT EIP 
   ADVITIPAssoc:
     Type: AWS::EC2::EIPAssociation
     Properties:
