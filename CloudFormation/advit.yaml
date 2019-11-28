@@ -132,9 +132,9 @@ Resources:
     Properties:
       AvailabilityZones: !GetAZs ''
       #LoadBalancerNames: [!Ref 'ADVITLoadBalancer']
-      Cooldown: 120
+      Cooldown: 900
         #InstanceId: !Ref Ec2Instance
-      DesiredCapacity: 1
+      #DesiredCapacity: 1
       MaxSize: 1
       MinSize: 1
       Tags:
