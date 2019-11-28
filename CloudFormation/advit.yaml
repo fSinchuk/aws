@@ -36,7 +36,7 @@ Resources:
           Key: Region
           Value: !Join
             - ""
-            - - "EC2 region:old "
+            - - "EC2 region: "
               - !Ref AWS::Region
   ADVITSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -50,7 +50,7 @@ Resources:
       Tags:
         -
           Key: Name
-          Value: Security group for ADV-IT test task
+          Value: Security group 1111 for ADV-IT test task
   ADVITLeastPrevilegeRole:
     Type: AWS::IAM::Role
     Properties: 
