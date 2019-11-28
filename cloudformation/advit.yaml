@@ -51,13 +51,8 @@ Resources:
       Tags:
         -
           Key: Name
-<<<<<<< Updated upstream
           Value: Security group 1111 for ADV-IT test task
   ADVITLeastPrevilegeRole:
-=======
-          Value: Security group for ADV-IT test task
-  ADVITLeastPrevilegeRole: 
->>>>>>> Stashed changes
     Type: AWS::IAM::Role
     Properties: 
       AssumeRolePolicyDocument: 
