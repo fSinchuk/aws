@@ -36,7 +36,7 @@ Resources:
           Key: Region
           Value: !Join
             - ""
-            - - "EC2 region: "
+            - - "EC2 region:old "
               - !Ref AWS::Region
   ADVITSecurityGroup:
     Type: AWS::EC2::SecurityGroup
